@@ -58,10 +58,22 @@ python3 scripts/generate_records.py
 ```
 
 #### Step C: Run the Robot Framework Tests
-Execute the data-driven BDD tests:
+Execute the tests with the default 150 records:
 ```bash
 robot tests/swift_tests.robot
 ```
+
+### ⚙️ Custom Configurations
+You can specify the number of records to run using the `-v RECORD_COUNT:<count>` parameter:
+
+```bash
+# Run 10 records (for a quick smoke test)
+robot -v RECORD_COUNT:10 tests/swift_tests.robot
+
+# Run 1000 records (for performance/load check)
+robot -v RECORD_COUNT:1000 tests/swift_tests.robot
+```
+The suite automatically regenerates the `data/records.csv` file with the requested count before starting.
 
 ## 📊 Viewing Results
 

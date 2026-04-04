@@ -8,14 +8,23 @@ Suite Setup       Start Test Environment
 Suite Teardown    Stop Test Environment
 Test Template     Process Payment Record
 
+*** Variables ***
+${RECORD_COUNT}    150
+
 *** Test Cases ***
 Scenario for Record ${record_id}    Default    Default    Default    Default
 
 *** Keywords ***
 Start Test Environment
-    [Documentation]    Starts the mock server process and waits for readiness.
+    [Documentation]    Generates the test data and starts the mock server.
+    # Generate data with the provided count before starting the suite
+    Log    Generating ${RECORD_COUNT} records...    level=INFO
+    Run Process    python3    scripts/generate_records.py    --count    ${RECORD_COUNT}    cwd=${CURDIR}/..
+    
+    # Start the mock server
     ${server_proc} =    Start Process    python3    scripts/mock_server.py    cwd=${CURDIR}/..
     Set Suite Variable    ${SERVER_PROC}    ${server_proc}
+    
     # Wait for the server to be ready and initialize the session
     Start SWIFT Mock Server    http://localhost:5005
 
