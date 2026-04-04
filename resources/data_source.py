@@ -4,15 +4,19 @@ from DataDriver.AbstractReaderClass import AbstractReaderClass
 
 class data_source(AbstractReaderClass):
     """
-    A dynamic data reader for DataDriver that generates records on-the-fly
-    based on the ${RECORD_COUNT} variable.
+    A dynamic data reader for DataDriver that generates records on-the-fly.
     """
     
-    def get_data_from_source(self, source, include, exclude):
-        # Get RECORD_COUNT from Robot Framework variables
+    def get_data_from_source(self, source=None, include=None, exclude=None):
+        # Accessing RECORD_COUNT directly from Robot's variables
+        # This works if RECORD_COUNT is passed via -v CLI
         try:
-            record_count = int(BuiltIn().get_variable_value("${RECORD_COUNT}", 150))
-        except (TypeError, ValueError):
+            # We try to get the variable from BuiltIn, which should be available during discovery
+            record_count_str = BuiltIn().get_variable_value("${RECORD_COUNT}", "150")
+            record_count = int(record_count_str)
+        except Exception as e:
+            # Fallback for discovery phase if BuiltIn is not fully ready
+            print(f"DEBUG: Falling back to default (Exception: {e})")
             record_count = 150
             
         print(f"DEBUG: Generating {record_count} dynamic records for DataDriver...")
@@ -39,11 +43,12 @@ class data_source(AbstractReaderClass):
                 expected_status = "ACCEPTED"
             
             # Map to ${variable} names for DataDriver
+            # Using the ${} syntax is critical for DataDriver variable mapping
             data_list.append({
                 "${record_id}": str(record_id),
                 "${currency}": currency,
                 "${amount}": str(amount),
-                "${expected_status}": expected_status
+                "${expected_status}": str(expected_status)
             })
             
         return data_list
