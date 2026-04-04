@@ -1,91 +1,54 @@
 # SWIFT CH20 Reproduction Project
 
-This project reproduces the SWIFT **CH20** error message (*Decimal Points Not Compatible With Currency*) specifically for Japanese Yen (JPY) transactions. 
-
-It demonstrates how 15 out of 150 records failed during an automation test because JPY is a zero-decimal currency, but the payments were sent with fractional amounts.
+This project reproduces the SWIFT **CH20** error message (*Decimal Points Not Compatible With Currency*) for Japanese Yen (JPY) transactions using an automated ISO 20022 workflow.
 
 ## 📁 Project Structure
 
 ```text
 kamu-swift-prep/
 ├── data/
-│   └── records.csv             # 150 payment records (Source Data)
+│   └── records.csv             # Dynamic payment records (Auto-generated)
 ├── resources/
-│   ├── swift_keywords.resource # Gherkin (BDD) keyword definitions
-│   └── xml_builder.py          # Helper library for XML construction
+│   ├── swift_keywords.resource # Gherkin step definitions
+│   └── xml_builder.py          # Professional ISO 20022 XML helper
 ├── tests/
-│   └── swift_tests.robot       # Robot Framework test suite (Data Driven)
+│   └── swift_tests.robot       # Robot Framework data-driven suite
 ├── scripts/
-│   ├── generate_records.py     # Script to generate mock CSV data
-│   └── mock_server.py          # Flask-based mock SWIFT server
-├── venv/                       # Virtual environment (ignored by git)
+│   ├── generate_records.py     # Script to generate mock SWIFT data
+│   └── mock_server.py          # Flask-based ISO 20022 mock server
+├── run_swift.sh                # Main entry point (highly recommended)
 ├── requirements.txt            # Project dependencies
 └── README.md                   # This project documentation
 ```
 
 ## 🚀 Getting Started
 
-### 1. Prerequisites
-- Python 3.9 or higher
-- `pip` (Python package installer)
-
-### 2. Installation
-Clone the repository and set up the virtual environment:
-
+### 1. Installation
 ```bash
-# Create and activate virtual environment
 python3 -m venv venv
 source venv/bin/activate
-
-# Install dependencies
 pip install -r requirements.txt
 ```
 
-### 3. Running the Project
-
-To reproduce the scenario, follow these steps in separate terminal windows (or background them):
-
-#### Step A: Start the Mock SWIFT Server
-This server simulates the SWIFT validation rules and will return `CH20` for invalid JPY payments.
-```bash
-python3 scripts/mock_server.py
-```
-
-#### Step B: Generate Mock Data
-This script creates a CSV file with 150 records, including 15 failing cases.
-```bash
-python3 scripts/generate_records.py
-```
-
-#### Step C: Run the Robot Framework Tests
-Execute the tests with the default 150 records:
-```bash
-robot tests/swift_tests.robot
-```
-
-### ⚙️ Custom Configurations
-You can specify the number of records to run using the `-v RECORD_COUNT:<count>` parameter:
+### 2. Running the Project (Recommended)
+Use the professional wrapper script to automatically generate data and run tests:
 
 ```bash
-# Run 10 records (for a quick smoke test)
-robot -v RECORD_COUNT:10 tests/swift_tests.robot
+# Run with default 150 records
+./run_swift.sh
 
-# Run 1000 records (for performance/load check)
-robot -v RECORD_COUNT:1000 tests/swift_tests.robot
+# Run with custom record count (e.g., 20)
+./run_swift.sh --count 20
 ```
-The suite automatically regenerates the `data/records.csv` file with the requested count before starting.
 
-## 📊 Viewing Results
+### 3. Manual Steps (Optional)
+If you prefer running individual components:
 
-After running the tests, check the generated artifacts:
-- **`report.html`**: High-level summary of pass/fail status.
-- **`log.html`**: Detailed execution logs, including:
-    - Generated SWIFT XML messages.
-    - API request and response data.
-    - Specific validation failure reasons for `CH20`.
+1. **Start Server**: `python3 scripts/mock_server.py`
+2. **Generate Data**: `python3 scripts/generate_records.py --count 150`
+3. **Run Robot**: `robot tests/swift_tests.robot`
 
-## 🛠️ Tech Stack
-- **Robot Framework**: Core automation framework.
-- **DataDriver**: For CSV-to-Test mapping.
-- **Flask**: For mocking the SWIFT backend.
-- **Gherkin**: For human-readable test cases.
+## 📊 Results Summary
+- **Success (`ACTC`)**: Non-JPY or integer JPY amounts.
+- **CH20 Error (`RJCT`)**: JPY amounts with decimals (rejected by mock server).
+- **Artifacts**: Check `report.html` and `log.html` for full SWIFT XML traces.
