@@ -16,7 +16,7 @@ kamu-swift-prep/
 ├── scripts/
 │   ├── generate_records.py     # Script to generate mock SWIFT data
 │   └── mock_server.py          # Flask-based ISO 20022 mock server
-├── run_swift.sh                # Main entry point (highly recommended)
+├── run_swift.py                # Cross-platform Python runner (Recommended)
 ├── requirements.txt            # Project dependencies
 └── README.md                   # This project documentation
 ```
@@ -24,25 +24,27 @@ kamu-swift-prep/
 ## 🚀 Getting Started
 
 ### 1. Installation
+Ensure you have Python 3.9+ installed and run:
+
 ```bash
 python3 -m venv venv
-source venv/bin/activate
+source venv/bin/activate # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
 ### 2. Running the Project (Recommended)
-Use the professional wrapper script to automatically generate data and run tests:
+Use the cross-platform Python runner to automatically generate data and run tests:
 
 ```bash
 # Run with default 150 records
-./run_swift.sh
+python3 run_swift.py
 
 # Run with custom record count (e.g., 20)
-./run_swift.sh --count 20
+python3 run_swift.py --count 20
 ```
 
 ### 3. Manual Steps (Optional)
-If you prefer running individual components:
+If you prefer running individual components manually:
 
 1. **Start Server**: `python3 scripts/mock_server.py`
 2. **Generate Data**: `python3 scripts/generate_records.py --count 150`
