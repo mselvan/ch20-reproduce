@@ -2,15 +2,11 @@
 Documentation     SWIFT CH20 Error Reproduction Suite
 Library           RequestsLibrary
 Library           Process
-# Using professional Python-based data reader to allow dynamic record counts at discovery time
-Library           DataDriver    reader_class=resources/data_source.py
+Library           DataDriver    file=../data/records.csv    dialect=unix    delimiter=,
 Resource          ../resources/swift_keywords.resource
 Suite Setup       Start Test Environment
 Suite Teardown    Stop Test Environment
 Test Template     Process Payment Record
-
-*** Variables ***
-${RECORD_COUNT}    150
 
 *** Test Cases ***
 Scenario for Record ${record_id}    Default    Default    Default    Default
@@ -18,8 +14,6 @@ Scenario for Record ${record_id}    Default    Default    Default    Default
 *** Keywords ***
 Start Test Environment
     [Documentation]    Starts the mock server and waits for readiness.
-    # Data is now generated dynamically by DataDriver via resources/data_source.py
-    
     # Start the mock server
     ${server_proc} =    Start Process    python3    scripts/mock_server.py    cwd=${CURDIR}/..
     Set Suite Variable    ${SERVER_PROC}    ${server_proc}
