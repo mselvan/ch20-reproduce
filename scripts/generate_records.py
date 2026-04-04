@@ -5,8 +5,6 @@ import os
 # Configuration
 TOTAL_RECORDS = 150
 FAILING_JPY_RECORDS = 15
-# Relative to the root of the project (if run from project root)
-# Alternatively, use absolute path or relative to this script
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUTPUT_FILE = os.path.join(BASE_DIR, "data", "records.csv")
 
@@ -14,14 +12,14 @@ OUTPUT_FILE = os.path.join(BASE_DIR, "data", "records.csv")
 CURRENCIES = ["USD", "EUR", "GBP", "JPY", "AUD", "CAD"]
 
 def main():
-    # Randomly select indices for JPY failures
+    """Generates 150 mock payment records with DataDriver-friendly headers."""
     jpy_fail_indices = set(random.sample(range(TOTAL_RECORDS), FAILING_JPY_RECORDS))
     
-    # Ensure data directory exists
     os.makedirs(os.path.dirname(OUTPUT_FILE), exist_ok=True)
     
     with open(OUTPUT_FILE, "w", newline='') as csvfile:
-        fieldnames = ['${RecordId}', '${Currency}', '${Amount}', '${ExpectedStatus}']
+        # Reverting to ${} headers as it's the most reliable for DataDriver variable mapping
+        fieldnames = ['${record_id}', '${currency}', '${amount}', '${expected_status}']
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()
         
@@ -40,10 +38,10 @@ def main():
                 expected_status = "ACCEPTED"
             
             writer.writerow({
-                '${RecordId}': record_id,
-                '${Currency}': currency,
-                '${Amount}': amount,
-                '${ExpectedStatus}': expected_status
+                '${record_id}': record_id,
+                '${currency}': currency,
+                '${amount}': amount,
+                '${expected_status}': expected_status
             })
 
     print(f"Generated {TOTAL_RECORDS} records in '{OUTPUT_FILE}'.")

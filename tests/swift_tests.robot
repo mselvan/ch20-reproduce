@@ -1,17 +1,19 @@
 *** Settings ***
+Documentation     SWIFT CH20 Error Reproduction Suite
 Library           RequestsLibrary
 Library           DataDriver    file=../data/records.csv    dialect=unix    delimiter=,
 Resource          ../resources/swift_keywords.resource
 Suite Setup       Create Session    swift_session    http://localhost:5005
-Test Template     Process Payment Record Gherkin Style
 
 *** Test Cases ***
-Scenario: Process record ${RecordId} for ${Currency}    ${RecordId}    ${Currency}    ${Amount}    ${ExpectedStatus}
+Process SWIFT Transaction for Record ${record_id}
+    [Template]    Process Payment Record
+    ${record_id}    ${currency}    ${amount}    ${expected_status}
 
 *** Keywords ***
-Process Payment Record Gherkin Style
-    [Arguments]    ${RecordId}    ${Currency}    ${Amount}    ${ExpectedStatus}
-    Log    Processing Record: ${RecordId} | Currency: ${Currency} | Amount: ${Amount} | Expected: ${ExpectedStatus}    level=INFO
-    Given a SWIFT payment record for ${RecordId} in ${Currency} with amount ${Amount}
-    When the record is sent to the mock server
-    Then the response should be ${ExpectedStatus}
+Process Payment Record
+    [Arguments]    ${record_id}    ${currency}    ${amount}    ${expected_status}
+    Log    Processing Record: ${record_id} | Currency: ${currency} | Amount: ${amount} | Expected: ${expected_status}    level=INFO
+    Given a SWIFT payment record exists for ${record_id}
+    When I submit the payment for ${currency} with amount ${amount}
+    Then the transaction should be ${expected_status}
