@@ -55,6 +55,10 @@ def validate_swift_amount(currency, amount_str):
             return False, "CH20"
     return True, None
 
+@app.route('/health', methods=['GET'])
+def health_check():
+    return Response("READY", mimetype='text/plain', status=200)
+
 @app.route('/upload', methods=['POST'])
 def upload_swift_message():
     xml_data = request.data

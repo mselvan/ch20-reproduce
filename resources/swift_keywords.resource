@@ -5,6 +5,20 @@ Library    XML
 Library    xml_builder.py
 
 *** Keywords ***
+Start SWIFT Mock Server
+    [Arguments]    ${host}=http://localhost:5005
+    Log    Waiting for mock server at ${host} to be ready...    level=INFO
+    Wait For Mock Server    ${host}
+    Create Session    swift_session    ${host}
+
+Wait For Mock Server
+    [Arguments]    ${host}
+    Wait Until Keyword Succeeds    30s    2s    Get Health Status    ${host}
+
+Get Health Status
+    [Arguments]    ${host}
+    ${response} =    GET    ${host}/health    expected_status=200
+    Should Be Equal As Strings    ${response.text}    READY
 Process Payment Record
     [Arguments]    ${record_id}    ${currency}    ${amount}    ${expected_status}
     Log    Processing Record: ${record_id} | Currency: ${currency} | Amount: ${amount} | Expected: ${expected_status}    level=INFO
