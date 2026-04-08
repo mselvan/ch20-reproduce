@@ -59,12 +59,13 @@ spec:
                     echo "Waiting for server readiness..."
                     sh """
                         count=0
-                        until curl -s http://localhost:5005/health || [ \$count -eq 10 ]; do
+                        until python3 -c "import urllib.request; urllib.request.urlopen('http://localhost:5005/health')" || [ \$count -eq 10 ]; do
                             sleep 2
                             count=\$((count + 1))
                             echo "Waiting for mock server... (\$count/10)"
                         done
-                        curl -s http://localhost:5005/health
+                        # Final check to fail the build if still not ready
+                        python3 -c "import urllib.request, sys; res = urllib.request.urlopen('http://localhost:5005/health'); sys.exit(0 if res.getcode() == 200 else 1)"
                     """
                 }
             }
