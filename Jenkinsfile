@@ -80,6 +80,7 @@ spec:
                 }
             }
         }
+    }
 
     post {
         always {
