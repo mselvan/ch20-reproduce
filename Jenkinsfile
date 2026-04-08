@@ -81,31 +81,25 @@ spec:
             }
         }
 
-        stage('Reporting') {
-            steps {
-                echo "Archiving artifacts and publishing results..."
-                
-                // Archive key files including the server logs for debugging
-                archiveArtifacts artifacts: 'report.html, log.html, output.xml, mock_server.log', fingerprint: true
-                
-                // Publish results via Robot Framework Plugin (native rich reports)
-                step([$class: 'RobotPublisher',
-                    disableArchiveOutput: false,
-                    logFileName: 'log.html',
-                    otherFiles: '',
-                    outputFileName: 'output.xml',
-                    outputPath: '.',
-                    passThreshold: 100,
-                    reportFileName: 'report.html',
-                    unstableThreshold: 0])
-            }
-        }
-    }
-
     post {
         always {
+            echo "Archiving artifacts and publishing results..."
+            
+            // Archive key files including the server logs for debugging
+            archiveArtifacts artifacts: 'report.html, log.html, output.xml, mock_server.log', fingerprint: true
+            
+            // Publish results via Robot Framework Plugin (native rich reports)
+            step([$class: 'RobotPublisher',
+                disableArchiveOutput: false,
+                logFileName: 'log.html',
+                otherFiles: '',
+                outputFileName: 'output.xml',
+                outputPath: '.',
+                passThreshold: 100,
+                reportFileName: 'report.html',
+                unstableThreshold: 0])
+            
             echo "Cleaning up..."
-            // In Kubernetes agent, the pod is destroyed automatically after the job finishes
         }
     }
 }
