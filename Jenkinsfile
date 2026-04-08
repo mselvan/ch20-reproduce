@@ -88,22 +88,16 @@ spec:
                 // Archive key files including the server logs for debugging
                 archiveArtifacts artifacts: 'report.html, log.html, output.xml, mock_server.log', fingerprint: true
                 
-                // Publish results via HTML Publisher plugin (if installed)
-                script {
-                    try {
-                        publishHTML([
-                            allowMissing: false,
-                            alwaysLinkToLastBuild: true, 
-                            keepAll: true, 
-                            reportDir: '.', 
-                            reportFiles: 'report.html', 
-                            reportName: 'SWIFT Test Report'
-                        ])
-                    } catch (Exception e) {
-                        echo "HTML Publisher Plugin not found. Skipping HTML report rendering."
-                        echo "You can still view the 'report.html' and 'log.html' in the 'Build Artifacts' section."
-                    }
-                }
+                // Publish results via Robot Framework Plugin (native rich reports)
+                step([$class: 'RobotPublisher',
+                    disableArchiveOutput: false,
+                    logFileName: 'log.html',
+                    otherFiles: '',
+                    outputFileName: 'output.xml',
+                    outputPath: '.',
+                    passThreshold: 100,
+                    reportFileName: 'report.html',
+                    unstableThreshold: 0])
             }
         }
     }
