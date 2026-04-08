@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  swift-reproduction:
+    build: .
+    image: swift-ch20-reproduce:latest
+    container_name: swift-ch20-runner
+    volumes:
+      - .:/app
+    environment:
+      - PYTHONUNBUFFERED=1
+    # The default command in Dockerfile is python run_swift.py
+    # We can override it here if we want to change the record count
+    command: python run_swift.py --count 150

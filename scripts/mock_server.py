@@ -89,4 +89,5 @@ def upload_swift_message():
 
 if __name__ == '__main__':
     print("Starting Professional Mock SWIFT Server (ISO 20022)...")
-    app.run(port=5005)
+    # Listen on 0.0.0.0 to be accessible within Docker network
+    app.run(host='0.0.0.0', port=5005)
