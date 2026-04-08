@@ -1,80 +1,109 @@
 pipeline {
-    agent any
-
-    environment {
-        // Define any environment variables if needed
-        DOCKER_IMAGE = "swift-ch20-reproduce"
+    agent {
+        kubernetes {
+            yaml """
+apiVersion: v1
+kind: Pod
+spec:
+  containers:
+  - name: test-runner
+    image: python:3.9-slim
+    command:
+    - cat
+    tty: true
+    resources:
+      requests:
+        memory: "256Mi"
+        cpu: "500m"
+      limits:
+        memory: "512Mi"
+        cpu: "1000m"
+  - name: mock-server
+    image: python:3.9-slim
+    command:
+    - cat
+    tty: true
+    ports:
+    - containerPort: 5005
+    resources:
+      requests:
+        memory: "128Mi"
+        cpu: "200m"
+      limits:
+        memory: "256Mi"
+        cpu: "500m"
+"""
+        }
     }
 
     stages {
-        stage('Checkout') {
+        stage('Setup Dependencies') {
             steps {
-                // This step is standard for Jenkins to pull the code
-                checkout scm
-            }
-        }
-
-        stage('Build Docker') {
-            steps {
-                echo "Building Docker image..."
-                sh 'docker compose build'
-            }
-        }
-
-        stage('Execute SWIFT Tests') {
-            steps {
-                echo "Running SWIFT Reproduction tests in Docker..."
-                // Use '--abort-on-container-exit' to stop all containers when one ends
-                // '--exit-code-from' ensures the pipeline reflects the test result
-                sh 'docker compose up --abort-on-container-exit --exit-code-from swift-reproduction'
-            }
-            post {
-                always {
-                    echo "Cleaning up containers..."
-                    sh 'docker compose down'
+                container('test-runner') {
+                    echo "Installing dependencies on test runner..."
+                    sh 'pip install --no-cache-dir -r requirements.txt'
+                }
+                container('mock-server') {
+                    echo "Installing dependencies on mock server..."
+                    sh 'pip install --no-cache-dir -r requirements.txt'
                 }
             }
         }
 
-        stage('Publish Reports') {
+        stage('Start Mock Server') {
             steps {
-                echo "Archiving Robot Framework reports..."
+                container('mock-server') {
+                    echo "Starting SWIFT Mock Server in background..."
+                    sh 'python scripts/mock_server.py > mock_server.log 2>&1 &'
+                    
+                    echo "Waiting for server readiness..."
+                    sh """
+                        count=0
+                        until curl -s http://localhost:5005/health || [ \$count -eq 10 ]; do
+                            sleep 2
+                            count=\$((count + 1))
+                            echo "Waiting for mock server... (\$count/10)"
+                        done
+                        curl -s http://localhost:5005/health
+                    """
+                }
+            }
+        }
+
+        stage('Run SWIFT Tests') {
+            steps {
+                container('test-runner') {
+                    echo "Executing SWIFT Reproduction Suite..."
+                    // Note: localhost works because containers in the same pod share the network
+                    sh 'python run_swift.py --count 150'
+                }
+            }
+        }
+
+        stage('Reporting') {
+            steps {
+                echo "Archiving artifacts and publishing results..."
                 
-                // 1. Archive the core artifacts so they are saved with the build
-                archiveArtifacts artifacts: 'report.html, log.html, output.xml, data/records.csv', fingerprint: true
+                // Archive key files including the server logs for debugging
+                archiveArtifacts artifacts: 'report.html, log.html, output.xml, mock_server.log', fingerprint: true
                 
-                // 2. Publish HTML report using the HTML Publisher Plugin
-                // This allows viewing the report directly in Jenkins UI via 'Robot Framework Report' link
+                // Publish results via HTML Publisher plugin
                 publishHTML([
                     allowMissing: false,
-                             alwaysLinkToLastBuild: true, 
-                             keepAll: true, 
-                             reportDir: '.', 
-                             reportFiles: 'report.html', 
-                             reportName: 'SWIFT Test Report'
+                    alwaysLinkToLastBuild: true, 
+                    keepAll: true, 
+                    reportDir: '.', 
+                    reportFiles: 'report.html', 
+                    reportName: 'SWIFT Test Report'
                 ])
-                
-                // 3. Optional: Publish via Robot Framework Plugin for rich metrics (if installed)
-                /*
-                step([$class: 'RobotPublisher',
-                    disableArchiveOutput: false,
-                    logFileName: 'log.html',
-                    otherFiles: '',
-                    outputFileName: 'output.xml',
-                    outputPath: '.',
-                    passThreshold: 100,
-                    reportFileName: 'report.html',
-                    unstableThreshold: 0])
-                */
             }
         }
     }
 
     post {
         always {
-            echo "Pipeline complete."
-            // Clean up dangling images/volumes to save space on Jenkins agent
-            sh 'docker compose down --rmi local --volumes --remove-orphans'
+            echo "Cleaning up..."
+            // In Kubernetes agent, the pod is destroyed automatically after the job finishes
         }
     }
 }
